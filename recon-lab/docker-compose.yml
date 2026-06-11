@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  web:
+    build: ./apache-vuln
+    ports:
+      - "8080:80"
+    container_name: web-vulneravel
+    networks:
+      - rede-lab
+
+  database:
+    image: mysql:5.7
+    container_name: db-vulneravel
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: loja
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - rede-lab
+
+networks:
+  rede-lab:
+    driver: bridge
