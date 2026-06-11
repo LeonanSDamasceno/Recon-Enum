@@ -1,4 +1,4 @@
-FEOM php:7.4-apache
+FROM php:7.4-apache
 
 #Ativa módulos de info e status (exposição indesejada)
 RUN a2enmod info status RUN echo "<Location /server-info>\n SetHandler server-info\n" > /etc/apache2/conf-available/server-info.conf
