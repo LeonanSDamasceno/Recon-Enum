@@ -354,3 +354,38 @@ Antes: serviços expostos com versões, páginas de debug abertas, credenciais p
 Depois: serviços ocultos, sem banners detalhados, páginas de debug bloqueadas, MySQL inacessível externamente e com senha forte.
 
 Você pode gravar as telas ou fazer ao vivo; a diferença é gritante.
+
+
+docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+[+] up 14/14
+ ✔ Image mysql:5.7 Pulled                                                                                         277.1s
+#1 [internal] load local bake definitions
+#1 reading from stdin 583B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile:
+[+] up 14/15ing dockerfile: 860B 0.1s done
+ ✔ Image mysql:5.7     Pulled                                                                                     277.1s
+ - Image recon-lab-web Building                                                                                     1.9s
+Dockerfile:2
+
+--------------------
+
+   1 |
+
+   2 | >>> Ativa módulos de info e status (exposição indesejada)
+
+   3 |     RUN a2enmod info status RUN echo "<Location /server-info>\n SetHandler server-info\n" > /etc/apache2/conf-available/server-info.conf
+
+   4 |     && echo "<Location /server-status>\n SetHandler server-status\n" > /etc/apache2/conf-available/server-status.conf
+
+--------------------
+
+failed to solve: dockerfile parse error on line 2: unknown instruction: Ativa
+
+
+What's next:
+    Filter, search, and stream logs from all your Compose services
+    in one place with Docker Desktop's Logs view. docker-desktop://dashboard/logs?appId=recon-lab
+    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
