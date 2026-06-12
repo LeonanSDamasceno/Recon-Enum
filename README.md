@@ -202,3 +202,23 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 - NIST Special Publication 800-123 (Guide to General Server Security)
 
 ---
+
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-06-12 12:40 +0000
+Nmap scan report for web-seguro (172.19.0.3)
+Host is up (0.00053s latency).
+rDNS record for 172.19.0.3: web-seguro.recon-lab_rede-lab-seguro
+
+PORT     STATE  SERVICE VERSION
+80/tcp   open   http    Apache httpd (PHP 7.4.33)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+|_http-server-header: Apache
+3306/tcp closed mysql
+MAC Address: 7A:1D:7E:8B:EE:34 (Unknown)
+Device type: general purpose|router
+Running: Linux 4.X|5.X, MikroTik RouterOS 7.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5 cpe:/o:mikrotik:routeros:7 cpe:/o:linux:linux_kernel:5.6.3
+OS details: Linux 4.15 - 5.19, OpenWrt 21.02 (Linux 5.4), MikroTik RouterOS 7.2 - 7.5 (Linux 5.6.3)
+Network Distance: 1 hop
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 8.67 seconds
