@@ -204,7 +204,16 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 
 ---
 
-parte segura: <img width="942" height="603" alt="image" src="https://github.com/user-attachments/assets/0e132648-35ec-4d26-ac6a-5b2d53b79ff5" />
+## Verificação da correção: 
+
+Nmap:
+nmap -sV -sC -O -p 80,3306 web-seguro
+
+<img width="942" height="603" alt="image" src="https://github.com/user-attachments/assets/0e132648-35ec-4d26-ac6a-5b2d53b79ff5" />
+
+Resultado:
+Porta 80: aberta, mas serviço identificado comohttp genérico (ouApache httpd sem versão detalhada). Sem título suspeito.
+Porta 3306: fechada ou filtrada, porque o MySQL não está publicando porta. O scanner não conseguirá detectar o serviço.
 
 <img width="501" height="160" alt="image" src="https://github.com/user-attachments/assets/a1c42147-8fec-4e2f-9470-c7b1be9f3aa8" />
 
