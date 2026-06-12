@@ -205,3 +205,8 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 - NIST Special Publication 800-123 (Guide to General Server Security)
 
 ---
+
+<img width="1365" height="318" alt="image" src="https://github.com/user-attachments/assets/4ec32060-d38e-482a-992d-e53782329f45" />
+
+
+
