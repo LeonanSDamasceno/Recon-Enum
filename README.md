@@ -8,6 +8,9 @@ O laboratório faz parte do projeto final da disciplina, exigindo:
 - Correção/mitigação
 - Apresentação ao vivo
 
+<img width="741" height="165" alt="image" src="https://github.com/user-attachments/assets/f9545f5e-57e3-4112-84ed-95a1e250adac" />
+
+
 ## 📚 O que é Reconhecimento e Enumeração?
 
 No contexto de segurança ofensiva, o **reconhecimento (reconnaissance)** é a primeira fase de um ataque. O atacante busca coletar o máximo de informações sobre o alvo, sem necessariamente invadir nada.
