@@ -204,7 +204,16 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 
 ---
 
-<img width="1365" height="318" alt="image" src="https://github.com/user-attachments/assets/4ec32060-d38e-482a-992d-e53782329f45" />
+parte segura: <img width="942" height="603" alt="image" src="https://github.com/user-attachments/assets/0e132648-35ec-4d26-ac6a-5b2d53b79ff5" />
+
+<img width="501" height="160" alt="image" src="https://github.com/user-attachments/assets/a1c42147-8fec-4e2f-9470-c7b1be9f3aa8" />
+
+<img width="440" height="133" alt="image" src="https://github.com/user-attachments/assets/16ab5c7a-41b3-41fd-8130-f173e7d56e97" />
+
+<img width="447" height="106" alt="image" src="https://github.com/user-attachments/assets/cf588360-58b2-459e-b8b9-a10f3c9e2aaf" />
+
+<img width="879" height="240" alt="image" src="https://github.com/user-attachments/assets/90c81fde-fdc9-4396-b8f3-64f161b9e427" />
+
 
 
 
