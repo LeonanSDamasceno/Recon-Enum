@@ -208,7 +208,9 @@ parte segura: <img width="942" height="603" alt="image" src="https://github.com/
 
 <img width="501" height="160" alt="image" src="https://github.com/user-attachments/assets/a1c42147-8fec-4e2f-9470-c7b1be9f3aa8" />
 
+
 <img width="440" height="133" alt="image" src="https://github.com/user-attachments/assets/16ab5c7a-41b3-41fd-8130-f173e7d56e97" />
+
 
 <img width="447" height="106" alt="image" src="https://github.com/user-attachments/assets/cf588360-58b2-459e-b8b9-a10f3c9e2aaf" />
 
