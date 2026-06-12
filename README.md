@@ -1,50 +1,15 @@
-1. Pré-requisitos (se ainda não tiver)
+1. Estrutura do projeto e arquivos
 
+Criamos a pastarecon-lab com dois componentes: um servidor web (Apache + PHP) e um banco de dados (MySQL), ambos configurados de forma insegura. Tudo é orquestrado pelo Docker Compose.
 
-
-
-
-Docker Desktop instalado e rodando com WSL2 habilitado.
-
-
-
-
-
-Baixe do site oficial: https://docs.docker.com/docker-for-windows/install/
-
-
-
-Durante a instalação, marque a opção de usar WSL2.
-
-
-
-Após instalar, reinicie e abra o Docker Desktop; espere o ícone na bandeja ficar verde.
-
-
-
-Windows Terminal ou PowerShell como administrador (para facilitar).
-
-
-
-Um editor de texto (VS Code, Notepad++, até o Bloco de Notas serve).
-
-
-
-2. Criar a pasta do projeto e os arquivos do ambiente vulnerável
-
-Abra o terminal e crie a pasta do laboratório, por exemplo,C:\Users\SEUUSUARIO\recon-lab.
-(Dentro do PowerShell, você pode usarmkdir recon-lab ecd recon-lab.)
-
-Agora, crie os seguintes arquivos exatamente como descritos:
-
-2.1docker-compose.yml
+docker-compose.yml (ambiente vulnerável)
 
 version: "3.8"
 services:
   web:
-    build: ./apache-vuln
+    build: ./apache-vuln      # Constrói a imagem a partir do Dockerfile na subpasta
     ports:
-      - "8080:80"
+      - "8080:80"             # Mapeia porta 8080 do host para 80 do container
     container_name: web-vulneravel
     networks:
       - rede-lab
@@ -53,10 +18,10 @@ services:
     image: mysql:5.7
     container_name: db-vulneravel
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root   # Senha fraca (padrão "root")
       MYSQL_DATABASE: loja
     ports:
-      - "3306:3306"
+      - "3306:3306"               # Expõe a porta do MySQL no host
     command: --default-authentication-plugin=mysql_native_password
     networks:
       - rede-lab
@@ -65,179 +30,204 @@ networks:
   rede-lab:
     driver: bridge
 
-2.2 Pastaapache-vuln e seu conteúdo
-
-Crie uma subpasta chamadaapache-vuln e dentro dela os dois arquivos:
+Explicações:
+-build: ./apache-vuln: diz ao Docker para montar uma imagem customizada usando o Dockerfile que está na pastaapache-vuln. Isso nos permite adicionar configurações inseguras.
+-ports: "8080:80": o servidor web dentro do container escuta na porta 80, mas acessamos do Windows vialocalhost:8080.
+-MYSQL_ROOT_PASSWORD: root: define a senha do usuário administrador do MySQL comoroot – uma credencial fraca e previsível.
+-ports: "3306:3306": publica a porta do MySQL, tornando-o acessível a qualquer um que alcance o host.
+-command: --default-authentication-plugin=mysql_native_password: força o MySQL 5.7 a usar o plugin de autenticação nativo (SHA-1), garantindo compatibilidade com clientes mais antigos.
+-networks: cria uma rede bridge isolada para os containers se comunicarem diretamente pelos nomes (web-vulneravel,db-vulneravel).
 
 apache-vuln/Dockerfile
 
 FROM php:7.4-apache
 
-# Ativa módulos de info e status (exposição indesejada)
+# Habilita server-info e server-status (módulos de monitoração)
 RUN a2enmod info status
 RUN echo "<Location /server-info>\n  SetHandler server-info\n</Location>" > /etc/apache2/conf-available/server-info.conf \
     && echo "<Location /server-status>\n  SetHandler server-status\n</Location>" > /etc/apache2/conf-available/server-status.conf \
     && a2enconf server-info server-status
 
-# Banner completo com versão
+# Exibe versão completa do Apache nos cabeçalhos e assinatura
 RUN echo "ServerTokens Full" >> /etc/apache2/conf-available/security.conf \
     && echo "ServerSignature On" >> /etc/apache2/conf-available/security.conf \
     && a2enconf security
 
-# Listagem de diretórios habilitada
+# Permite listagem de diretórios (Indexes)
 RUN echo "<Directory /var/www/html>\n  Options Indexes FollowSymLinks\n</Directory>" >> /etc/apache2/conf-available/directory.conf \
     && a2enconf directory
 
-# Cópia da página com phpinfo() (debug esquecido)
+# Página inicial vazada (phpinfo)
 COPY index.php /var/www/html/
 
-apache-vuln/index.php
-
-<h1>Em Manutenção</h1>
-<?php phpinfo(); ?>
-
-2.3 Verifique a estrutura
-
-Sua pastarecon-lab deve ficar assim:
-
-recon-lab/
-├── docker-compose.yml
-└── apache-vuln/
-    ├── Dockerfile
-    └── index.php
+Explicações:
+-a2enmod info status: ativa os módulosserver-info eserver-status, que exibem informações detalhadas do servidor e conexões ativas.
+-ServerTokens Full +ServerSignature On: faz com que o Apache envie nos cabeçalhos HTTP a versão exata e detalhes do sistema operacional (ex.:Apache/2.4.41 (Unix)).
+-Options Indexes: se não houver um arquivo de índice (comoindex.html), o Apache lista os arquivos do diretório – vazamento de estrutura.
 
 
 
-3. Subir o ambiente vulnerável
 
-No terminal, dentro da pastarecon-lab, execute:
+
+A páginaindex.php contémphpinfo(); – comando que exibe TODAS as configurações do PHP, variáveis de ambiente, módulos, etc. Isso é um desastre de segurança se acessível.
+
+
+
+2. Comandos Docker e subida do ambiente vulnerável
 
 docker compose up -d --build
 
-(Se seu Docker for antigo, o comando pode serdocker-compose up -d --build; ambos funcionam.)
+-up: sobe todos os serviços definidos nodocker-compose.yml.
+--d: "detached mode" – executa em segundo plano, liberando o terminal.
+---build: força a reconstrução das imagens (necessário após alterar Dockerfile).
 
-Aguarde a construção e inicialização. Para conferir:
+Na primeira execução, o Docker baixa as imagens base, executa as instruções do Dockerfile e inicia os containers. Após isso,docker ps lista:
 
-docker ps
+CONTAINER ID   IMAGE                  ...   NAMES
+abc123         recon-lab-web          ...   web-vulneravel
+def456         mysql:5.7              ...   db-vulneravel
 
-Você verá os containersweb-vulneravel edb-vulneravel rodando.
+A rederecon-lab_rede-lab é criada automaticamente (nome prefixado com o diretório do projeto). Isso permite que os containers se comuniquem usando os nomes de serviço (web-vulneravel,db-vulneravel).
 
 
 
-4. Preparar o container Kali para os ataques
+3. Container Kali e instalação de ferramentas
 
-Precisamos de um container Kali com acesso à mesma rede do laboratório. Primeiro, descubra o nome da rede criada:
-
-docker network ls
-
-Provavelmente aparecerá algo comorecon-lab_rede-lab (prefixo do projeto + nome da rede). Anote esse nome.
-
-Agora execute um container Kali interativo, instalando as ferramentas necessárias:
+Para simular um atacante, usamos um container Kali Linux na mesma rede do laboratório. Não é necessário instalar uma VM completa.
 
 docker run -it --network=recon-lab_rede-lab kalilinux/kali-rolling bash
 
-Dentro do container Kali, atualize e instale as ferramentas:
+--it: modo interativo com terminal.
+---network=recon-lab_rede-lab: conecta o container à rede onde estão os alvos (o nome exato você obtém comdocker network ls).
+-kalilinux/kali-rolling: imagem oficial do Kali Linux (sem ferramentas gráficas).
+
+Dentro desse container, somos root. Atualizamos e instalamos as ferramentas:
 
 apt update
-apt install -y nmap netcat-openbsd whatweb dirb
+apt install -y nmap netcat-openbsd whatweb dirb mariadb-client
 
-(Isso pode levar alguns minutos; aproveite para tomar um café.)
+-nmap: scanner de rede e portas.
+-netcat-openbsd: utilitário para conexões TCP/UDP simples (usado para banner grabbing).
+-whatweb: identifica tecnologias usadas em sites.
+-dirb: força bruta de diretórios (enumeração de estrutura).
+-mariadb-client: cliente de banco de dados compatível com MySQL (comandomysql).
 
 
 
-5. Demonstração do ataque (reconhecimento e enumeração)
+4. Demonstração do ataque: reconhecimento e enumeração
 
-Agora, ainda dentro do Kali container, faça as varreduras contra os servidores do laboratório.
-Acessaremos os serviços usando os nomes dos containers (resolução DNS funciona na rede Docker) ou os IPs. Vamos usar os nomes, que são mais didáticos.
+Agora, do Kali, atacamos os serviços.
 
-5.1 Varredura de portas e detecção de versões (nmap)
+4.1nmap
 
 nmap -sV -sC -O -p 80,3306 web-vulneravel
 
-(Saída típica: Apache httpd 2.4.x com página “Em Manutenção”, MySQL 5.7.x, banner da versão.)
+Explicação:
+-nmap: ferramenta de exploração e auditoria de rede.
+--sV: detecta versões dos serviços (service version).
+--sC: roda scripts padrão de enumeração (NSE).
+--O: tenta identificar o sistema operacional.
+--p 80,3306: verifica apenas as portas 80 (web) e 3306 (MySQL).
+-web-vulneravel: nome do container alvo (resolvido pelo DNS interno do Docker).
 
-5.2 Banner grabbing no Apache
+Saída esperada:
+
+PORT     STATE SERVICE  VERSION
+80/tcp   open  http     Apache httpd 2.4.x ((Unix))
+|_http-title: Em Manutenção
+| http-server-header: Apache/2.4.x (Unix)
+3306/tcp open  mysql    MySQL 5.7.x
+| mysql-info: ...
+
+Isso mostra as versões exatas do Apache e MySQL, além de detalhes como o título da página. Essas informações seriam usadas pelo atacante para buscar exploits específicos.
+
+4.2 Banner grabbing com netcat
 
 echo -e "HEAD / HTTP/1.0\r\n" | nc web-vulneravel 80
 
-Você verá o cabeçalhoServer: Apache/2.4.x (Unix) ..., mostrando a versão exata.
+-echo -e "HEAD / HTTP/1.0\r\n": envia uma requisição HEAD (apenas cabeçalhos) pelo pipe para onc.
+-nc web-vulneravel 80: abre uma conexão TCP na porta 80 do alvo. Tudo que chega pelostdin é enviado e a resposta é impressa no terminal.
 
-5.3 Páginas expostas (acessíveis via linha de comando ou script)
+Saída:
 
-Mostre que/server-status e/server-info estão disponíveis:
+HTTP/1.1 200 OK
+Date: ...
+Server: Apache/2.4.41 (Unix)
+...
 
-curl http://web-vulneravel/server-status   # status do Apache
-curl http://web-vulneravel/server-info     # configuração do servidor
-curl http://web-vulneravel/                # página com phpinfo()
+O cabeçalhoServer revela a versão exata do Apache. Em um cenário real, isso facilita a busca por vulnerabilidades conhecidas.
 
-5.4 Enumeração do MySQL
+4.3 Páginas expostas comcurl
 
-Tente um banner direto com netcat:
+curl http://web-vulneravel/server-status
+curl http://web-vulneravel/server-info
+curl http://web-vulneravel/
+
+-curl: ferramenta de linha de comando para transferir dados via URL.
+
+
+
+
+
+Acessamos diretamente as URLs que deveriam ser protegidas.
+
+Resultados:
+-/server-status: mostra o status atual do servidor (IPs, requisições recentes, etc.).
+-/server-info: exibe toda a configuração do servidor (módulos, parâmetros).
+-/: a página comphpinfo() nos dá informações críticas: versão do PHP, módulos carregados, variáveis de ambiente, caminhos do sistema, etc.
+
+Tudo isso é informação que um atacante adora para planejar ataques posteriores.
+
+4.4 Enumeração do MySQL
+
+Banner grabbing comnc
 
 nc db-vulneravel 3306
 
-(Você verá a string de versão do MySQL.)
+Assim que a conexão é estabelecida, o servidor MySQL envia uma string com a versão (ex.:5.7.39-log). Basta pressionar Ctrl+C para encerrar.
 
-E tente conectar com as credenciais padrão:
+Conexão com credenciais padrão
 
-apt install -y mysql-client   # se ainda não tiver
-mysql -h db-vulneravel -u root -proot -e "SHOW DATABASES;"
+Tentamos o comando:
 
-(Isso prova que a senha fracaroot concede acesso total.)
+mysql -h db-vulneravel -u root -proot --ssl-mode=DISABLED -e "SHOW DATABASES;"
 
-5.5 Enumeração de diretórios com dirb (opcional)
+Explicação detalhada:
+-mysql: cliente de linha de comando para interagir com o MySQL.
+--h db-vulneravel: host onde o MySQL está rodando (nome do container).
+--u root: usuário root.
+--proot: a opção-p seguida da senharoot (sem espaço entre-p e a senha). Isso é uma credencial extremamente fraca.
+---ssl-mode=DISABLED: desabilita a tentativa de conexão com SSL, porque o servidor usa um certificado autoassinado que o cliente não confia. Em um ataque real, o atacante também poderia desabilitar a verificação SSL para prosseguir com a enumeração.
+--e "SHOW DATABASES;": executa o comando SQL e encerra, em vez de abrir um shell interativo.
 
-dirb http://web-vulneravel/
+Erro de SSL:
+O erroError 2026 (HY000): TLS/SSL error: Certificate verification failure ocorreu porque o cliente tentou negociar SSL e o certificado do servidor não é confiável. Ao usar--ssl-mode=DISABLED contornamos isso, mas note que isso também é uma configuração fraca que permite tráfego não criptografado.
 
-(Listará/server-status,/server-info, etc.)
+Saída esperada (após corrigir o SSL):
 
-Dica: capture a saída de cada comando (pode copiar do terminal ou tirar prints) para os slides.
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| loja               |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
 
-Saia do container Kali (digiteexit), mas não pare o ambiente vulnerável ainda.
+Isso prova que conseguimos conectar como administrador do banco de dados e listar as bases. A partir daí, poderíamos extrair tabelas, dados, etc.
 
 
 
-6. Correção – ambiente seguro (hardening)
+5. Correção / hardening
 
-Agora vamos criar os arquivos do ambiente corrigido, sem expor informações sensíveis.
+Após demonstrar o ataque, partimos para a correção. Paramos o ambiente vulnerável:
 
-6.1 Crie uma nova pastaapache-seguro dentro derecon-lab
+docker compose down
 
-Com esta estrutura:
+Criamos novos arquivos para a versão segura.
 
-recon-lab/
-└── apache-seguro/
-    ├── Dockerfile
-    └── index.php
-
-apache-seguro/Dockerfile
-
-FROM php:7.4-apache
-
-# Desabilita módulos de info e status
-RUN a2dismod info status
-RUN rm -f /etc/apache2/conf-enabled/server-info.conf /etc/apache2/conf-enabled/server-status.conf
-
-# Banner restrito (mínimo de informação)
-RUN echo "ServerTokens Prod" >> /etc/apache2/conf-available/security.conf \
-    && echo "ServerSignature Off" >> /etc/apache2/conf-available/security.conf \
-    && a2enconf security
-
-# Remove listagem de diretórios
-RUN echo "<Directory /var/www/html>\n  Options -Indexes\n</Directory>" >> /etc/apache2/conf-available/directory.conf \
-    && a2enconf directory
-
-# Página normal, sem debug
-COPY index.php /var/www/html/
-
-apache-seguro/index.php
-
-<h1>Bem-vindo à Loja</h1>
-<p>Página inicial segura, sem informações sensíveis.</p>
-
-6.2 Novodocker-compose-seguro.yml
-
-Na raiz derecon-lab:
+docker-compose-seguro.yml
 
 version: "3.8"
 services:
@@ -253,11 +243,9 @@ services:
     image: mysql:5.7
     container_name: db-seguro
     environment:
-      MYSQL_ROOT_PASSWORD: SenhaSegura@123!
+      MYSQL_ROOT_PASSWORD: SenhaSegura@123!   # senha forte e diferente
       MYSQL_DATABASE: loja
-    # ❗ Não expõe porta no host (acesso apenas interno)
-    # ports:
-    #   - "3306:3306"
+    # ports:   <-- removido! não expõe a porta 3306 no host
     command: --default-authentication-plugin=mysql_native_password
     networks:
       - rede-lab-seguro
@@ -266,126 +254,173 @@ networks:
   rede-lab-seguro:
     driver: bridge
 
-Observe que a porta 3306 não é mais mapeada para o host; apenas o containerweb-seguro pode acessar o banco internamente.
+Mudanças:
+-MYSQL_ROOT_PASSWORD: agora uma senha forte e não óbvia.
 
-6.3 Parar o ambiente vulnerável e subir o seguro
 
-docker compose down
+
+
+
+Removemosports: 3306:3306 do serviçodatabase. Isso significa que o container MySQL só é acessível dentro da rederede-lab-seguro, não mais externamente. Mesmo que alguém no host tente escanear a porta 3306, ela não estará mapeada.
+
+
+
+A rede é isolada por padrão.
+
+apache-seguro/Dockerfile
+
+FROM php:7.4-apache
+
+# Desabilita server-info e server-status
+RUN a2dismod info status
+RUN rm -f /etc/apache2/conf-enabled/server-info.conf /etc/apache2/conf-enabled/server-status.conf
+
+# Banner restrito
+RUN echo "ServerTokens Prod" >> /etc/apache2/conf-available/security.conf \
+    && echo "ServerSignature Off" >> /etc/apache2/conf-available/security.conf \
+    && a2enconf security
+
+# Remove listagem de diretório
+RUN echo "<Directory /var/www/html>\n  Options -Indexes\n</Directory>" >> /etc/apache2/conf-available/directory.conf \
+    && a2enconf directory
+
+# Página normal, sem phpinfo
+COPY index.php /var/www/html/
+
+Mudanças:
+-a2dismod info status+ remoção dos arquivos de config: ninguém mais acessa/server-status ou/server-info.
+-ServerTokens Prod: exibe apenas "Apache" no cabeçalho, sem versão.
+-ServerSignature Off: remove a assinatura do rodapé das páginas de erro.
+-Options -Indexes: desabilita listagem de diretórios.
+-index.php agora contém apenas HTML simples, sem vazamento de informações.
+
+apache-seguro/index.php:
+
+<h1>Bem-vindo à Loja</h1>
+<p>Página inicial segura, sem informações sensíveis.</p>
+
+Subimos o ambiente seguro:
+
 docker compose -f docker-compose-seguro.yml up -d --build
 
-Verifique:
-
-docker ps
-
-Agora aparecerãoweb-seguro edb-seguro, e apenas a porta 8080 estará visível no host.
 
 
+6. Verificação da correção
 
-7. Demonstração da correção (ataque falhando)
+Pelo container Kali (na nova rede)
 
-Rode novamente um container Kali na nova rede (note que o nome da rede agora serárecon-lab_rede-lab-seguro). Confira comdocker network ls e inicie:
+Iniciamos outro container Kali conectado àrede-lab-seguro:
 
 docker run -it --network=recon-lab_rede-lab-seguro kalilinux/kali-rolling bash
 
-Instale as ferramentas de novo (ou aproveite se fez cache de imagem, mas o contêiner é novo). Melhor instalar de novo:
+(Instalamos as ferramentas novamente, como antes.)
 
-apt update && apt install -y nmap netcat-openbsd
+nmap
 
-Dentro do Kali, execute os mesmos testes:
+nmap -sV -sC -O -p 80,3306 web-seguro
 
-
-
-
-
-Varredura nmap:
-
-  nmap -sV -sC -O -p 80,3306 web-seguro
-
-Resultado: porta 80 aparece comohttp sem detalhes da versão do Apache (apenasApache ouApache httpd), e a porta 3306 nem aparece porque não está exposta no mesmo segmento (está filtrada ou não existe).
+Resultado:
 
 
 
 
 
-Banner no Apache:
-
-  echo -e "HEAD / HTTP/1.0\r\n" | nc web-seguro 80
-
-OServer dirá apenasApache (sem versão e sem módulos).
+Porta 80: aberta, mas serviço identificado comohttp genérico (ouApache httpd sem versão detalhada). Sem título suspeito.
 
 
 
+Porta 3306: fechada ou filtrada, porque o MySQL não está publicando porta. O scanner não conseguirá detectar o serviço.
 
+Banner Apache
 
-Páginas restritas:
+echo -e "HEAD / HTTP/1.0\r\n" | nc web-seguro 80
 
-  curl -I http://web-seguro/server-status
+Resposta:Server: Apache (sem versão).
 
-Retorna 404 Not Found ou 403 Forbidden.
+Páginas restritas
 
+curl -I http://web-seguro/server-status
 
+Retorna404 Not Found (ou403 Forbidden), pois o módulo foi desabilitado.
 
+MySQL inacessível
 
+Se tentarmosnc db-seguro 3306, recebemos "Connection refused" (o container está rodando, mas não está mapeando a porta para o host, e o Kali está na mesma rede mas o MySQL dentro do container só escuta no IP interno, mas o nomedb-seguro resolve… Na verdade, como estão na mesma rede bridge, o Kali consegue alcançar o containerdb-seguro na porta 3306 diretamente, pois a porta não está mapeada para o host, mas o container está sim ouvindo na rede interna. Portanto, dentro da rede, onc db-seguro 3306 ainda pode funcionar e mostrar o banner, a menos que restrinjamos com firewall interno. Para a demonstração didática, podemos simplesmente mostrar que onmap não encontra a porta 3306 aberta se executarmos o scanner do host (Windows) onde apenas a 8080 está mapeada.)
 
-Tentativa de MySQL:
+Para uma verificação mais impactante, instale onmap no Windows (ou use o PowerShell) e execute:
 
-  nc db-seguro 3306
+nmap -sV -p 8080,3306 localhost
 
-Conexão recusada (ou nem tenta, já que o nomedb-seguro resolve mas a porta não está mapeada fora do container, e o Kali está na mesma rede, consegue alcançar mas a política de acesso? Na verdade, o containerdb-seguro está na rede interna e o Kali consegue alcançá-lo pelo nome, mas a senha foi alterada. Se você tentarnc db-seguro 3306, ele até conecta na porta do MySQL, então você ainda veria o banner do MySQL. Para demonstrar a mitigação completa, podemos bloquear também o MySQL com firewall no container ou simplesmente mostrar que a senha não é maisroot. Vamos adicionar um firewall no container db-seguro para rejeitar conexões externas. Para simplificar, você pode modificar odocker-compose-seguro.yml do banco para adicionar umcap_add e um comando de entrada que usa iptables. Ou, mais simples: mostre que o scanner externo (de fora do Docker) não vê a porta 3306 de forma alguma, porque não foi publicada. Se você fizernmap localhost do Windows (com nmap instalado no Windows), verá que a 3306 está filtered. Para manter a demonstração dentro do Kali, podemos usar o IP do host (gateway) e ver que a porta não está acessível. Mas é mais fácil: pare o container Kali anterior, e instale o nmap no Windows (https://nmap.org/download.html#windows) e faça a varredura local:
+Saída:
 
-  nmap -sV -p 8080,3306 localhost
+PORT     STATE  SERVICE    VERSION
+8080/tcp open   http       Apache httpd (sem detalhes)
+3306/tcp closed mysql
 
-Você verá apenas a 8080 como http, sem detalhes, e a 3306 comofiltered. Essa abordagem é simples e visualmente forte.
-
-Adapte: use o nmap do Windows para o último teste. Instalar o nmap no Windows é rápido.
-
-
-
-8. Resumo da demonstração
-
-
-
-
-
-Antes: serviços expostos com versões, páginas de debug abertas, credenciais padrão, banco acessível.
+Isso comprova que a porta do banco não está mais visível externamente.
 
 
 
-Depois: serviços ocultos, sem banners detalhados, páginas de debug bloqueadas, MySQL inacessível externamente e com senha forte.
-
-Você pode gravar as telas ou fazer ao vivo; a diferença é gritante.
+7. Resumo dos conceitos de segurança
 
 
-docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
-[+] up 14/14
- ✔ Image mysql:5.7 Pulled                                                                                         277.1s
-#1 [internal] load local bake definitions
-#1 reading from stdin 583B 0.0s done
-#1 DONE 0.0s
-
-#2 [internal] load build definition from Dockerfile
-#2 transferring dockerfile:
-[+] up 14/15ing dockerfile: 860B 0.1s done
- ✔ Image mysql:5.7     Pulled                                                                                     277.1s
- - Image recon-lab-web Building                                                                                     1.9s
-Dockerfile:2
-
---------------------
-
-   1 |
-
-   2 | >>> Ativa módulos de info e status (exposição indesejada)
-
-   3 |     RUN a2enmod info status RUN echo "<Location /server-info>\n SetHandler server-info\n" > /etc/apache2/conf-available/server-info.conf
-
-   4 |     && echo "<Location /server-status>\n SetHandler server-status\n" > /etc/apache2/conf-available/server-status.conf
-
---------------------
-
-failed to solve: dockerfile parse error on line 2: unknown instruction: Ativa
 
 
-What's next:
-    Filter, search, and stream logs from all your Compose services
-    in one place with Docker Desktop's Logs view. docker-desktop://dashboard/logs?appId=recon-lab
-    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+
+Reconhecimento e Enumeração: fase inicial de um ataque, onde o atacante coleta informações sobre alvos (portas, serviços, versões, usuários). Essas informações são usadas para identificar vulnerabilidades específicas.
+
+
+
+Configurações inseguras:
+
+
+
+
+
+Banners detalhados (ServerTokens Full)
+
+
+
+Páginas de debug ou status (/server-info,/server-status,phpinfo())
+
+
+
+Credenciais padrão ou fracas (root/root)
+
+
+
+Mapeamento desnecessário de portas
+
+
+
+Falta de criptografia ou SSL mal configurado
+
+
+
+Mitigação:
+
+
+
+
+
+Minimização de informações expostas (ServerTokens Prod, remover assinaturas)
+
+
+
+Desabilitar funcionalidades desnecessárias (módulos de status)
+
+
+
+Remover arquivos de debug
+
+
+
+Política de senhas fortes
+
+
+
+Segmentação de rede: apenas serviços estritamente necessários devem ser publicados
+
+
+
+Hardening contínuo
