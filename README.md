@@ -1,43 +1,204 @@
-# Laboratório de Reconhecimento e Enumeração (Tema 12)
+# 🔍 Laboratório de Reconhecimento e Enumeração – Tema 12
 
-Este repositório contém um ambiente controlado para demonstrar a fase de **reconhecimento e enumeração** em testes de intrusão, bem como as medidas de hardening que impedem a coleta indevida de informações. O laboratório utiliza Docker para simular um servidor web e um banco de dados propositadamente mal configurados, permitindo ataques reais e posterior correção.
+Este repositório contém o ambiente prático desenvolvido para demonstrar **falhas de configuração** que permitem a um atacante realizar reconhecimento e enumeração de serviços e, em seguida, aplicar as correções necessárias (hardening). 
 
-## 📚 Conceitos: Reconhecimento e Enumeração
+O laboratório faz parte do projeto final da disciplina, exigindo:
+- Construção de ambiente vulnerável
+- Demonstração do ataque
+- Correção/mitigação
+- Apresentação ao vivo
 
-No contexto de segurança ofensiva, o **reconhecimento (reconnaissance)** é a primeira fase de um ataque. O atacante busca coletar o máximo de informações sobre o alvo, sem necessariamente invadir nada. Pode ser:
+## 📚 O que é Reconhecimento e Enumeração?
 
-- **Passivo:** sem interagir diretamente com o alvo (ex.: pesquisar em redes sociais, consultar registros DNS, Shodan).
-- **Ativo:** interagindo com os sistemas (ex.: escaneamento de portas, envio de requisições HTTP).
+No contexto de segurança ofensiva, o **reconhecimento (reconnaissance)** é a primeira fase de um ataque. O atacante busca coletar o máximo de informações sobre o alvo, sem necessariamente invadir nada.
 
-A **enumeração** é um aprofundamento do reconhecimento ativo. Aqui o atacante extrai detalhes específicos:
+- **Passivo:** sem interagir diretamente com o alvo (ex.: pesquisas em redes sociais, consultas DNS, Shodan).
+- **Ativo:** interagindo com os sistemas (ex.: escaneamento de portas, requisições HTTP).
 
+A **enumeração** é o aprofundamento do reconhecimento ativo. Nela o atacante extrai detalhes específicos:
 - Quais serviços e versões estão rodando?
 - Que páginas ou diretórios ocultos existem?
-- Quais usuários ou contas são válidos?
-- Há credenciais padrão ou configurações expostas?
+- Quais usuários ou credenciais padrão estão presentes?
+- Há informações internas expostas?
 
-Essas informações permitem ao atacante:
+Essas informações permitem planejar ataques direcionados, explorar vulnerabilidades conhecidas e escalar privilégios. Estão mapeadas em frameworks como **MITRE ATT&CK (Discovery)** e na fase de recon da **Cyber Kill Chain**.
 
-- Identificar vulnerabilidades conhecidas (ex.: exploits para Apache 2.4.41).
-- Planejar ataques direcionados (ex.: força bruta, SQL injection).
-- Escalar privilégios ou se mover lateralmente na rede.
+## 🧪 Como o laboratório reproduz isso?
 
-Este laboratório demonstra exatamente essas etapas: a partir de serviços mal configurados, revelamos banners, páginas de debug e credenciais padrão. Depois aplicamos correções que quebram a capacidade de enumeração, reduzindo drasticamente a superfície de ataque.
+Criamos um ambiente propositadamente mal configurado (OWASP A05 – Security Misconfiguration) com Apache e MySQL expondo banners detalhados, páginas de debug/status e credenciais padrão. Em seguida, usamos ferramentas de ataque para:
 
-## 🧱 Arquitetura do Ambiente
+1. Varrer portas e serviços (`nmap`)
+2. Capturar banners (`netcat`)
+3. Acessar páginas expostas (`curl`)
+4. Conectar ao banco com senha fraca (`mysql`)
 
-Utilizamos três containers Docker:
+Depois, aplicamos correções e repetimos os testes para mostrar que o ataque falha.
 
-1. **web-vulneravel (Apache + PHP):** servidor com banners detalhados, módulos `server-info`/`server-status` ativos e página `phpinfo()` exposta.
-2. **db-vulneravel (MySQL 5.7):** banco com senha `root:root` e porta 3306 publicada no host.
-3. **Kali Linux (atacante):** container temporário com ferramentas como `nmap`, `netcat`, `curl` e `mysql`.
+---
 
-Todos os containers compartilham uma rede bridge interna. No final, substituímos os serviços vulneráveis por versões corrigidas (`web-seguro` e `db-seguro`).
+## 🛠️ Estrutura do ambiente
 
-## 💻 Pré-requisitos
+recon-lab/
+├── docker-compose.yml # Ambiente vulnerável
+├── docker-compose-seguro.yml # Ambiente corrigido
+├── apache-vuln/ # Dockerfile + index.php vulnerável
+└── apache-seguro/ # Dockerfile + index.php seguro
 
-- **Docker Desktop** (Windows, macOS ou Linux) com WSL2 ativado (no Windows).
-- **PowerShell** ou terminal equivalente.
-- Editor de texto (VS Code, Notepad++, etc.).
+Utiliza **Docker Compose** com três contêineres na mesma rede bridge:
+- `web-vulneravel` (Apache + PHP)
+- `db-vulneravel` (MySQL 5.7)
+- `kali` (Kali Linux para ataques)
 
-## 📁 Estrutura do Projeto
+---
+
+## 🔥 Fase 1 – Ambiente vulnerável
+
+### Arquivos principais
+
+#### `docker-compose.yml` (inseguro)
+
+yaml
+services:
+web:
+build: ./apache-vuln
+ports: ["8080:80"]
+database:
+image: mysql:5.7
+environment:
+MYSQL_ROOT_PASSWORD: root # Senha fraca
+ports: ["3306:3306"] # Porta exposta
+
+####`apache-vuln/Dockerfile`
+-`ServerTokens Full` → versão completa no cabeçalho
+- Módulos`server-info` e`server-status` ativados
+-`phpinfo()` exposto na raiz
+- Listagem de diretórios habilitada
+
+### Subir o ambiente
+
+bash
+docker compose up -d --build
+
+---
+
+## 🚀 Fase 2 – Ataque (reconhecimento e enumeração)
+
+A partir de um contêiner Kali conectado à mesma rede, executamos os seguintes comandos.
+
+> Todos os comandos são executados dentro do Kali (`docker run -it --network=recon-lab_rede-lab kalilinux/kali-rolling bash`).
+
+### 2.1 Varredura de portas e serviços –`nmap`
+
+bash
+nmap -sV -sC -O -p 80,3306 web-vulneravel
+
+-`-sV`: detecta versão dos serviços
+-`-sC`: scripts padrão de enumeração
+-`-O`: tenta identificar SO
+
+**Resultado:** exibe versão exata do Apache e MySQL, título da página, etc.
+
+### 2.2 Banner grabbing –`netcat`
+
+bash
+echo -e "HEAD / HTTP/1.0\r\n" | nc web-vulneravel 80
+
+Envia uma requisição HEAD e imprime a resposta, revelando o cabeçalho`Server` com a versão completa.
+
+### 2.3 Acesso a páginas expostas –`curl`
+
+bash
+curl http://web-vulneravel/server-status # status do Apache
+curl http://web-vulneravel/server-info # configuração do servidor
+curl http://web-vulneravel/ # phpinfo() exposto
+
+Essas páginas fornecem informações internas críticas.
+
+### 2.4 Enumeração do MySQL –`netcat` +`mysql`
+Banner do MySQL:
+
+bash
+nc db-vulneravel 3306 # mostra versão na saudação do banco
+
+Conexão com credencial padrão:
+
+bash
+mysql -h db-vulneravel -u root -proot --ssl=0 -e "SHOW DATABASES;"
+
+-`-u root -proot`: usuário e senha fracos
+-`--ssl=0`: desabilita SSL (necessário pois o certificado é autoassinado)
+-`-e "SHOW DATABASES;"`: lista as bases de dados
+
+**Resultado:** o atacante tem acesso total ao banco, podendo extrair qualquer dado.
+
+---
+
+## 🛡️ Fase 3 – Correção (hardening)
+
+Paramos o ambiente vulnerável e subimos a versão segura.
+
+### Mudanças no`docker-compose-seguro.yml`
+- Senha forte no MySQL (`SenhaSegura@123!`)
+- **Porta 3306 não é mais mapeada** para o host (apenas rede interna)
+
+### Mudanças no`apache-seguro/Dockerfile`
+-`ServerTokens Prod` → exibe apenas “Apache”
+- Módulos`info` e`status` desabilitados e removidos
+- Página inicial sem`phpinfo()`
+- Listagem de diretórios desabilitada (`-Indexes`)
+
+### Subir ambiente seguro
+
+bash
+docker compose down
+docker compose -f docker-compose-seguro.yml up -d --build
+
+---
+
+## ✅ Fase 4 – Verificação da correção
+
+Repetimos os mesmos comandos de ataque, agora contra`web-seguro` e`db-seguro` (na nova rede).
+
+### Novo`nmap`
+
+bash
+nmap -sV -sC -O -p 80,3306 web-seguro
+
+- Porta 80: serviço identificado apenas como`http`, sem detalhes de versão
+- Porta 3306: fechada ou filtrada (não está mais exposta)
+
+### Banner grabbing
+
+bash
+echo -e "HEAD / HTTP/1.0\r\n" | nc web-seguro 80
+
+- Cabeçalho`Server: Apache` (sem versão ou SO)
+
+### Páginas restritas
+
+bash
+curl -I http://web-seguro/server-status # 404 Not Found
+curl -I http://web-seguro/ # HTML simples, sem phpinfo
+
+### MySQL inacessível
+-`nc db-seguro 3306` → conexão recusada (porta fechada externamente)
+-`mysql -h db-seguro -u root -proot ...` → falha na conexão
+
+**Conclusão:** as mesmas técnicas que antes forneciam um mapa completo do ambiente agora não retornam informação útil. A superfície de ataque foi drasticamente reduzida.
+
+---
+
+## 🧠 Conceitos aplicados
+
+- **Reconhecimento ativo**: interagimos diretamente com os serviços para obter informações.
+- **Enumeração**: extraímos versões, páginas ocultas, credenciais.
+- **Falha de configuração (A05:2021)**: banners detalhados, páginas de debug, senhas padrão.
+- **Hardening**: princípios de defesa em profundidade, mínima exposição de informação, desabilitação de funcionalidades desnecessárias.
+
+## 📄 Referências
+- OWASP Top 10 – A05 Security Misconfiguration
+- MITRE ATT&CK – Tactic: Discovery
+- CIS Benchmarks
+- NIST Special Publication 800-123 (Guide to General Server Security)
+
+---
