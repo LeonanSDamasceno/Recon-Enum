@@ -165,6 +165,8 @@ Repetimos os mesmos comandos de ataque, agora contra`web-seguro` e`db-seguro` (n
 bash
 nmap -sV -sC -O -p 80,3306 web-seguro
 
+<img width="942" height="603" alt="image" src="https://github.com/user-attachments/assets/0e132648-35ec-4d26-ac6a-5b2d53b79ff5" />
+
 - Porta 80: serviço identificado apenas como`http`, sem detalhes de versão
 - Porta 3306: fechada ou filtrada (não está mais exposta)
 
@@ -173,6 +175,9 @@ nmap -sV -sC -O -p 80,3306 web-seguro
 bash
 echo -e "HEAD / HTTP/1.0\r\n" | nc web-seguro 80
 
+<img width="501" height="160" alt="image" src="https://github.com/user-attachments/assets/a1c42147-8fec-4e2f-9470-c7b1be9f3aa8" />
+
+
 - Cabeçalho`Server: Apache` (sem versão ou SO)
 
 ### Páginas restritas
@@ -180,6 +185,14 @@ echo -e "HEAD / HTTP/1.0\r\n" | nc web-seguro 80
 bash
 curl -I http://web-seguro/server-status # 404 Not Found
 curl -I http://web-seguro/ # HTML simples, sem phpinfo
+
+<img width="440" height="133" alt="image" src="https://github.com/user-attachments/assets/16ab5c7a-41b3-41fd-8130-f173e7d56e97" />
+
+
+<img width="447" height="106" alt="image" src="https://github.com/user-attachments/assets/cf588360-58b2-459e-b8b9-a10f3c9e2aaf" />
+
+<img width="879" height="240" alt="image" src="https://github.com/user-attachments/assets/90c81fde-fdc9-4396-b8f3-64f161b9e427" />
+
 
 ### MySQL inacessível
 -`nc db-seguro 3306` → conexão recusada (porta fechada externamente)
@@ -209,21 +222,14 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 Nmap:
 nmap -sV -sC -O -p 80,3306 web-seguro
 
-<img width="942" height="603" alt="image" src="https://github.com/user-attachments/assets/0e132648-35ec-4d26-ac6a-5b2d53b79ff5" />
+
 
 Resultado:
 Porta 80: aberta, mas serviço identificado comohttp genérico (ouApache httpd sem versão detalhada). Sem título suspeito.
 Porta 3306: fechada ou filtrada, porque o MySQL não está publicando porta. O scanner não conseguirá detectar o serviço.
 
-<img width="501" height="160" alt="image" src="https://github.com/user-attachments/assets/a1c42147-8fec-4e2f-9470-c7b1be9f3aa8" />
 
 
-<img width="440" height="133" alt="image" src="https://github.com/user-attachments/assets/16ab5c7a-41b3-41fd-8130-f173e7d56e97" />
-
-
-<img width="447" height="106" alt="image" src="https://github.com/user-attachments/assets/cf588360-58b2-459e-b8b9-a10f3c9e2aaf" />
-
-<img width="879" height="240" alt="image" src="https://github.com/user-attachments/assets/90c81fde-fdc9-4396-b8f3-64f161b9e427" />
 
 
 
