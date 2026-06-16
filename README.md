@@ -217,19 +217,6 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 
 ---
 
-## Verificação da correção: 
-
-Nmap:
-nmap -sV -sC -O -p 80,3306 web-seguro
-
-
-
-Resultado:
-Porta 80: aberta, mas serviço identificado comohttp genérico (ouApache httpd sem versão detalhada). Sem título suspeito.
-Porta 3306: fechada ou filtrada, porque o MySQL não está publicando porta. O scanner não conseguirá detectar o serviço.
-
-
-
 
 
 
