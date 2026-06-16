@@ -198,7 +198,7 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 <img width="879" height="240" alt="image" src="https://github.com/user-attachments/assets/90c81fde-fdc9-4396-b8f3-64f161b9e427" />
 
 
-**Conclusão:** as mesmas técnicas que antes forneciam um mapa completo do ambiente agora não retornam informação útil. A superfície de ataque foi drasticamente reduzida.
+**Conclusão:** As mesmas técnicas que antes forneciam um mapa completo do ambiente agora não retornam informações útil. A superfície de ataque foi drasticamente reduzida.
 
 ---
 
