@@ -189,14 +189,14 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 <img width="440" height="133" alt="image" src="https://github.com/user-attachments/assets/16ab5c7a-41b3-41fd-8130-f173e7d56e97" />
 
 
+### MySQL inacessível
+-`nc db-seguro 3306` → conexão recusada (porta fechada externamente)
+-`mysql -h db-seguro -u root -proot ...` → falha na conexão
+
 <img width="447" height="106" alt="image" src="https://github.com/user-attachments/assets/cf588360-58b2-459e-b8b9-a10f3c9e2aaf" />
 
 <img width="879" height="240" alt="image" src="https://github.com/user-attachments/assets/90c81fde-fdc9-4396-b8f3-64f161b9e427" />
 
-
-### MySQL inacessível
--`nc db-seguro 3306` → conexão recusada (porta fechada externamente)
--`mysql -h db-seguro -u root -proot ...` → falha na conexão
 
 **Conclusão:** as mesmas técnicas que antes forneciam um mapa completo do ambiente agora não retornam informação útil. A superfície de ataque foi drasticamente reduzida.
 
