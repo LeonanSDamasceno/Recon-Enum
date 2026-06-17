@@ -86,7 +86,7 @@ docker compose up -d --build
 
 ---
 
-## 🚀 Fase 2 – Ataque (reconhecimento e enumeração)
+## Fase 2 – Ataque (reconhecimento e enumeração)
 
 A partir de um contêiner Kali conectado à mesma rede, executamos os seguintes comandos.
 
@@ -101,6 +101,8 @@ nmap -sV -sC -O -p 80,3306 web-vulneravel
 -`-sC`: scripts padrão de enumeração
 -`-O`: tenta identificar SO
 
+<img width="858" height="306" alt="image" src="https://github.com/user-attachments/assets/a3ad2249-40e2-4ab4-80bd-d86bf0fea5dd" />
+
 **Resultado:** exibe versão exata do Apache e MySQL, título da página, etc.
 
 ### 2.2 Banner grabbing –`netcat`
@@ -109,6 +111,9 @@ bash
 echo -e "HEAD / HTTP/1.0\r\n" | nc web-vulneravel 80
 
 Envia uma requisição HEAD e imprime a resposta, revelando o cabeçalho`Server` com a versão completa.
+
+<img width="404" height="114" alt="image" src="https://github.com/user-attachments/assets/b4a827b4-e5ac-4a97-a579-6d37abc43e2b" />
+
 
 ### 2.3 Acesso a páginas expostas –`curl`
 
@@ -119,11 +124,18 @@ curl http://web-vulneravel/ # phpinfo() exposto
 
 Essas páginas fornecem informações internas críticas.
 
+<img width="631" height="339" alt="image" src="https://github.com/user-attachments/assets/b8c90a58-5598-4381-9238-7e616e0c3c8b" />
+
+<img width="793" height="445" alt="image" src="https://github.com/user-attachments/assets/4c07a303-0edd-40d7-a954-49da71463492" />
+
+
 ### 2.4 Enumeração do MySQL –`netcat` +`mysql`
 Banner do MySQL:
 
 bash
 nc db-vulneravel 3306 # mostra versão na saudação do banco
+
+<img width="385" height="72" alt="image" src="https://github.com/user-attachments/assets/6974fe79-60f4-4227-a308-7300da67303d" />
 
 Conexão com credencial padrão:
 
@@ -138,7 +150,7 @@ mysql -h db-vulneravel -u root -proot --ssl=0 -e "SHOW DATABASES;"
 
 ---
 
-## 🛡️ Fase 3 – Correção (hardening)
+## Fase 3 – Correção (hardening)
 
 Paramos o ambiente vulnerável e subimos a versão segura.
 
@@ -160,7 +172,7 @@ docker compose -f docker-compose-seguro.yml up -d --build
 
 ---
 
-## ✅ Fase 4 – Verificação da correção
+## Fase 4 – Verificação da correção
 
 Repetimos os mesmos comandos de ataque, agora contra`web-seguro` e`db-seguro` (na nova rede).
 
@@ -206,15 +218,15 @@ curl -I http://web-seguro/ # HTML simples, sem phpinfo
 
 ---
 
-## 🧠 Conceitos aplicados
+## Conceitos aplicados
 
 - **Reconhecimento ativo**: interagimos diretamente com os serviços para obter informações.
 - **Enumeração**: extraímos versões, páginas ocultas, credenciais.
-- **Falha de configuração (A05:2021)**: banners detalhados, páginas de debug, senhas padrão.
+- **Falha de configuração (A02:2025)**: banners detalhados, páginas de debug, senhas padrão.
 - **Hardening**: princípios de defesa em profundidade, mínima exposição de informação, desabilitação de funcionalidades desnecessárias.
 
-## 📄 Referências
-- OWASP Top 10 – A05 Security Misconfiguration
+## Referências
+- OWASP Top 10 – A02 Security Misconfiguration
 - MITRE ATT&CK – Tactic: Discovery
 - CIS Benchmarks
 - NIST Special Publication 800-123 (Guide to General Server Security)
