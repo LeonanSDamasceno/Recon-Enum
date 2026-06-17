@@ -1,17 +1,17 @@
-# 🔍 Laboratório de Reconhecimento e Enumeração – Tema 12
+#  Reconhecimento e Enumeração
 
 Este repositório contém o ambiente prático desenvolvido para demonstrar **falhas de configuração** que permitem a um atacante realizar reconhecimento e enumeração de serviços e, em seguida, aplicar as correções necessárias (hardening). 
 
-O laboratório faz parte do projeto final da disciplina, exigindo:
+Ao decorrer da apresentação serão mostrados:
 - Construção de ambiente vulnerável
 - Demonstração do ataque
 - Correção/mitigação
 - Apresentação ao vivo
 
 
-## 📚 O que é Reconhecimento e Enumeração?
+## O que é Reconhecimento e Enumeração?
 
-No contexto de segurança ofensiva, o **reconhecimento (reconnaissance)** é a primeira fase de um ataque. O atacante busca coletar o máximo de informações sobre o alvo, sem necessariamente invadir nada.
+No contexto de segurança em sistemas de informação , o **reconhecimento (reconnaissance)** é a primeira fase de um ataque. O atacante busca coletar o máximo de informações sobre o alvo, sem necessariamente invadir nada.
 
 - **Passivo:** sem interagir diretamente com o alvo (ex.: pesquisas em redes sociais, consultas DNS, Shodan).
 - **Ativo:** interagindo com os sistemas (ex.: escaneamento de portas, requisições HTTP).
@@ -24,7 +24,7 @@ A **enumeração** é o aprofundamento do reconhecimento ativo. Nela o atacante 
 
 Essas informações permitem planejar ataques direcionados, explorar vulnerabilidades conhecidas e escalar privilégios. Estão mapeadas em frameworks como **MITRE ATT&CK (Discovery)** e na fase de recon da **Cyber Kill Chain**.
 
-## 🧪 Como o laboratório reproduz isso?
+## Como o laboratório reproduz isso?
 
 Criamos um ambiente propositadamente mal configurado (OWASP A05 – Security Misconfiguration) com Apache e MySQL expondo banners detalhados, páginas de debug/status e credenciais padrão. Em seguida, usamos ferramentas de ataque para:
 
@@ -37,7 +37,7 @@ Depois, aplicamos correções e repetimos os testes para mostrar que o ataque fa
 
 ---
 
-## 🛠️ Estrutura do ambiente
+## Estrutura do ambiente
 
 recon-lab/
 ├── docker-compose.yml # Ambiente vulnerável
