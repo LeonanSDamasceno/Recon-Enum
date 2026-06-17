@@ -40,9 +40,13 @@ Depois, aplicamos correções e repetimos os testes para mostrar que o ataque fa
 ## Estrutura do ambiente
 
 recon-lab/
+
 ├── docker-compose.yml # Ambiente vulnerável
+
 ├── docker-compose-seguro.yml # Ambiente corrigido
+
 ├── apache-vuln/ # Dockerfile + index.php vulnerável
+
 └── apache-seguro/ # Dockerfile + index.php seguro
 
 Utiliza **Docker Compose** com três contêineres na mesma rede bridge:
