@@ -56,7 +56,7 @@ Utiliza **Docker Compose** com três contêineres na mesma rede bridge:
 
 ---
 
-## 🔥 Fase 1 – Ambiente vulnerável
+## Fase 1 – Ambiente vulnerável
 
 ### Arquivos principais
 
