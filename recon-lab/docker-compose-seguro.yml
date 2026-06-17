@@ -14,7 +14,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: SenhaSegura@123!
       MYSQL_DATABASE: loja
-    # ❗ Não expõe porta no host (acesso apenas interno)
+    # Não expõe porta no host (acesso apenas interno)
     # ports:
     #   - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
