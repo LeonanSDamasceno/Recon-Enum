@@ -63,14 +63,23 @@ Utiliza **Docker Compose** com três contêineres na mesma rede bridge:
 #### `docker-compose.yml` (inseguro)
 
 yaml
+
 services:
+
 web:
+
 build: ./apache-vuln
+
 ports: ["8080:80"]
+
 database:
+
 image: mysql:5.7
+
 environment:
+
 MYSQL_ROOT_PASSWORD: root # Senha fraca
+
 ports: ["3306:3306"] # Porta exposta
 
 ####`apache-vuln/Dockerfile`
