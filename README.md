@@ -146,6 +146,9 @@ mysql -h db-vulneravel -u root -proot --ssl=0 -e "SHOW DATABASES;"
 -`--ssl=0`: desabilita SSL (necessário pois o certificado é autoassinado)
 -`-e "SHOW DATABASES;"`: lista as bases de dados
 
+<img width="645" height="199" alt="WhatsApp Image 2026-06-17 at 08 08 13" src="https://github.com/user-attachments/assets/a9ecc5bd-a7bd-49bc-a4b2-972b9906d6f2" />
+
+
 **Resultado:** o atacante tem acesso total ao banco, podendo extrair qualquer dado.
 
 ---
